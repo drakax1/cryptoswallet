@@ -4,48 +4,15 @@
   <meta charset="UTF-8" />
   <title>Portefeuille Crypto (EUR)</title>
   <style>
-    body {
-      font-family: sans-serif;
-      background-color: #f4f4f9;
-      padding: 20px;
-      max-width: 900px;
-      margin: auto;
-    }
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    thead {
-      background-color: #2c3e50;
-      color: white;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid #ddd;
-    }
-    tbody tr:hover {
-      background-color: #f1f1f1;
-    }
-    tfoot td {
-      font-weight: bold;
-      background-color: #ecf0f1;
-    }
-    .positive {
-      color: green;
-    }
-    .negative {
-      color: red;
-    }
+    body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; background: #f9f9f9; }
+    table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.05); margin-top: 20px; }
+    thead { background: #2c3e50; color: white; }
+    th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+    tbody tr:hover { background: #f1f1f1; }
+    tfoot td { font-weight: bold; background: #ecf0f1; }
+    .positive { color: green; }
+    .negative { color: red; }
+    .unavailable { color: #999; font-style: italic; }
   </style>
 </head>
 <body>
@@ -56,8 +23,8 @@
       <tr>
         <th>Crypto</th>
         <th>Quantité</th>
-        <th>Prix unitaire (EUR)</th>
-        <th>Montant investi (EUR)</th>
+        <th>Prix EUR</th>
+        <th>Valeur Totale (EUR)</th>
       </tr>
     </thead>
     <tbody id="crypto-table"></tbody>
@@ -72,7 +39,9 @@
       </tr>
     </tfoot>
   </table>
+
   <p>Dernière mise à jour : <span id="last-updated">Chargement...</span></p>
+
   <script>
     const portfolio = [
       { id: 'aave', name: 'AAVE', quantity: 1.5 },
@@ -84,7 +53,7 @@
       { id: 'pyth-network', name: 'PYTH', quantity: 14 },
       { id: 'sei-network', name: 'SEI', quantity: 14 },
       { id: 'bittensor', name: 'TAO', quantity: 1 },
-      { id: 'tia-network', name: 'TIA', quantity: 14 }
+      { id: 'celestia', name: 'TIA', quantity: 14 }
     ];
 
     const budgetInitial = 1300;
@@ -98,48 +67,10 @@
         const data = await response.json();
 
         const tbody = document.getElementById('crypto-table');
-        tbody.innerHTML = ''; // Clear old data
-
+        tbody.innerHTML = '';
         let total = 0;
 
-        portfolio.forEach(coin => {
-          const price = data[coin.id]?.eur || 0;
-          const value = price * coin.quantity;
-          total += value;
-
-          const row = `
-            <tr>
-              <td>${coin.name}</td>
-              <td>${coin.quantity}</td>
-              <td>${price.toFixed(2)} €</td>
-              <td>${value.toFixed(2)} €</td>
-            </tr>
-          `;
-          tbody.insertAdjacentHTML('beforeend', row);
-        });
-
-        const diff = total - budgetInitial;
-        const percent = ((diff / budgetInitial) * 100).toFixed(2);
-        const diffFormatted = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)} € (${percent}%)`;
-        const diffClass = diff >= 0 ? 'positive' : 'negative';
-
-        document.getElementById('total-value').textContent = total.toFixed(2) + ' €';
-        const diffElem = document.getElementById('difference');
-        diffElem.textContent = diffFormatted;
-        diffElem.className = diffClass;
-
-        const now = new Date();
-        const formattedTime = now.toLocaleString('fr-FR', { timeZone: 'Europe/Zurich' });
-        document.getElementById('last-updated').textContent = formattedTime;
-
-      } catch (error) {
-        console.error("Erreur API CoinGecko:", error);
-        document.getElementById('last-updated').textContent = "Erreur de chargement";
-      }
-    }
-
-    fetchPrices();
-    setInterval(fetchPrices, 60000); // Met à jour toutes les 60 secondes
-  </script>
-</body>
-</html>
+        portfolio.forEach(c => {
+          let price = data[c.id]?.eur;
+          let displayPrice = '';
+          let value = 0
