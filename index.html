@@ -5,70 +5,59 @@
   <title>Portefeuille Crypto (EUR)</title>
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-        Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-      background-color: #f9f9f9;
+      font-family: sans-serif;
+      background-color: #f4f4f9;
       padding: 20px;
-      max-width: 800px;
+      max-width: 900px;
       margin: auto;
     }
-
     h1 {
       text-align: center;
+      color: #333;
     }
-
     table {
-      border-collapse: collapse;
       width: 100%;
-      margin-top: 1em;
-      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      border-collapse: collapse;
+      margin-top: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       background: white;
       border-radius: 8px;
       overflow: hidden;
     }
-
     thead {
       background-color: #2c3e50;
       color: white;
-      text-align: left;
     }
-
     th, td {
-      padding: 12px 15px;
+      padding: 12px;
+      text-align: left;
       border-bottom: 1px solid #ddd;
     }
-
     tbody tr:hover {
       background-color: #f1f1f1;
     }
-
     tfoot td {
       font-weight: bold;
       background-color: #ecf0f1;
     }
-
     .positive {
-      color: #27ae60;
-      font-weight: bold;
+      color: green;
     }
-
     .negative {
-      color: #c0392b;
-      font-weight: bold;
+      color: red;
     }
   </style>
 </head>
 <body>
   <h1>Portefeuille Crypto (EUR)</h1>
   <p><strong>Budget initial :</strong> 1300 €</p>
-
   <table>
     <thead>
       <tr>
         <th>Crypto</th>
         <th>Quantité</th>
-        <th>Prix EUR</th>
-        <th>Valeur Totale (EUR)</th>
+        <th>Prix unitaire (EUR)</th>
+        <th>Montant investi (EUR)</th>
       </tr>
     </thead>
     <tbody id="crypto-table"></tbody>
@@ -83,15 +72,13 @@
       </tr>
     </tfoot>
   </table>
-
   <p>Dernière mise à jour : <span id="last-updated">Chargement...</span></p>
-
   <script>
     const portfolio = [
       { id: 'aave', name: 'AAVE', quantity: 1.5 },
       { id: 'avalanche-2', name: 'AVAX', quantity: 10 },
       { id: 'internet-computer', name: 'ICP', quantity: 18 },
-      { id: 'jupiter', name: 'JUP', quantity: 10 },
+      { id: 'jupiter', name: 'JUP', quantity: 50 },
       { id: 'chainlink', name: 'LINK', quantity: 10 },
       { id: 'near', name: 'NEAR', quantity: 24 },
       { id: 'pyth-network', name: 'PYTH', quantity: 14 },
@@ -139,4 +126,20 @@
         document.getElementById('total-value').textContent = total.toFixed(2) + ' €';
         const diffElem = document.getElementById('difference');
         diffElem.textContent = diffFormatted;
-        diffElem.className = diffCla
+        diffElem.className = diffClass;
+
+        const now = new Date();
+        const formattedTime = now.toLocaleString('fr-FR', { timeZone: 'Europe/Zurich' });
+        document.getElementById('last-updated').textContent = formattedTime;
+
+      } catch (error) {
+        console.error("Erreur API CoinGecko:", error);
+        document.getElementById('last-updated').textContent = "Erreur de chargement";
+      }
+    }
+
+    fetchPrices();
+    setInterval(fetchPrices, 60000); // Met à jour toutes les 60 secondes
+  </script>
+</body>
+</html>
