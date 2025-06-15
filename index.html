@@ -1,15 +1,13 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Portefeuille Crypto (EUR)</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; background: #f9f9f9; }
-    table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.05); margin-top: 20px; }
-    thead { background: #2c3e50; color: white; }
-    th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
-    tbody tr:hover { background: #f1f1f1; }
-    tfoot td { font-weight: bold; background: #ecf0f1; }
+    body { font-family: sans-serif; }
+    table { border-collapse: collapse; margin-top: 1em; width: 100%; max-width: 800px; }
+    th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: center; }
+    tfoot td { font-weight: bold; }
     .positive { color: green; }
     .negative { color: red; }
     .unavailable { color: #999; font-style: italic; }
@@ -47,13 +45,13 @@
       { id: 'aave', name: 'AAVE', quantity: 1.5 },
       { id: 'avalanche-2', name: 'AVAX', quantity: 10 },
       { id: 'internet-computer', name: 'ICP', quantity: 18 },
-      { id: 'jupiter', name: 'JUP', quantity: 50 },
       { id: 'chainlink', name: 'LINK', quantity: 10 },
       { id: 'near', name: 'NEAR', quantity: 24 },
-      { id: 'pyth-network', name: 'PYTH', quantity: 14 },
-      { id: 'sei-network', name: 'SEI', quantity: 14 },
       { id: 'bittensor', name: 'TAO', quantity: 1 },
-      { id: 'celestia', name: 'TIA', quantity: 14 }
+      { id: 'celestia', name: 'TIA', quantity: 6 },
+      { id: 'jupiter', name: 'JUP', quantity: 50 },
+      { id: 'pyth-network', name: 'PYTH', quantity: 40 },
+      { id: 'sei-network', name: 'SEI', quantity: 30 }
     ];
 
     const budgetInitial = 1300;
@@ -68,6 +66,7 @@
 
         const tbody = document.getElementById('crypto-table');
         tbody.innerHTML = '';
+
         let total = 0;
 
         portfolio.forEach(c => {
@@ -76,11 +75,12 @@
           let value = 0;
           let unavailable = false;
 
-          if (price === undefined || price === 0) {
+          if (typeof price !== 'number' || isNaN(price) || price <= 0) {
             displayPrice = `<span class="unavailable">Prix non disponible</span>`;
+            value = 0;
             unavailable = true;
           } else {
-            displayPrice = price.toFixed(2) + ' €';
+            displayPrice = price < 1 ? price.toFixed(4) + ' €' : price.toFixed(2) + ' €';
             value = price * c.quantity;
             total += value;
           }
@@ -93,28 +93,31 @@
               <td>${c.quantity}</td>
               <td>${displayPrice}</td>
               <td>${valueDisplay}</td>
-            </tr>`;
+            </tr>
+          `;
           tbody.insertAdjacentHTML('beforeend', row);
         });
 
         const diff = total - budgetInitial;
-        const pct = ((diff / budgetInitial) * 100).toFixed(2);
+        const percent = ((diff / budgetInitial) * 100).toFixed(2);
+        const diffFormatted = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)} € (${percent}%)`;
+        const diffClass = diff >= 0 ? 'positive' : 'negative';
+
         document.getElementById('total-value').textContent = total.toFixed(2) + ' €';
-        const diffEl = document.getElementById('difference');
-        diffEl.textContent = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)} € (${pct}%)`;
-        diffEl.className = diff >= 0 ? 'positive' : 'negative';
+        document.getElementById('difference').textContent = diffFormatted;
+        document.getElementById('difference').className = diffClass;
 
-        document.getElementById('last-updated').textContent =
-          new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Zurich' });
+        const now = new Date();
+        const formattedTime = now.toLocaleString('fr-FR', { timeZone: 'Europe/Zurich' });
+        document.getElementById('last-updated').textContent = formattedTime;
 
-      } catch (err) {
-        console.error(err);
-        document.getElementById('last-updated').textContent = 'Erreur de chargement';
+      } catch (error) {
+        console.error("Erreur API CoinGecko:", error);
       }
     }
 
     fetchPrices();
-    setInterval(fetchPrices, 60000);
+    setInterval(fetchPrices, 60000); // mise à jour chaque minute
   </script>
 </body>
 </html>
