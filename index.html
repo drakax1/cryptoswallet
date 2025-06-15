@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Portefeuille Crypto (EUR)</title>
+  <style>
+    body { font-family: sans-serif; }
+    table { border-collapse: collapse; margin-top: 1em; }
+    th, td { border: 1px solid #ccc; padding: 8px 12px; }
+    tfoot td { font-weight: bold; }
+    .positive { color: green; }
+    .negative { color: red; }
+  </style>
+</head>
+<body>
+  <h1>Portefeuille Crypto (EUR)</h1>
+  <p><strong>Budget initial :</strong> 1300 €</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Crypto</th>
+        <th>Quantité</th>
+        <th>Prix EUR</th>
+        <th>Valeur Totale (EUR)</th>
+      </tr>
+    </thead>
+    <tbody id="crypto-table"></tbody>
+    <tfoot>
+      <tr>
+        <td colspan="3">Valeur totale du portefeuille</td>
+        <td id="total-value">-</td>
+      </tr>
+      <tr>
+        <td colspan="3">Différence vs budget (1300 €)</td>
+        <td id="difference">-</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <p>Dernière mise à jour : <span id="last-updated">Chargement...</span></p>
+
+  <script>
+    const portfolio = [
+      { id: 'aave', name: 'AAVE', quantity: 1.5 },
+      { id: 'avalanche-2', name: 'AVAX', quantity: 10 },
+      { id: 'internet-computer', name: 'ICP', quantity: 18 },
+      { id: 'chainlink', name: 'LINK', quantity: 10 },
+      { id: 'matic-network', name: 'POL (MATIC)', quantity: 14 },
+      { id: 'near', name: 'NEAR', quantity: 24 },
+      { id: 'render-token', name: 'RNDR', quantity: 50 },
+      { id: 'bittensor', name: 'TAO', quantity: 1 },
+    ];
+
+    const budgetInitial = 1300;
+
+    async function fetchPrices() {
+      const ids = portfolio.map(c => c.id).join(',');
+      const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur`;
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+
+        const tbody = document.getElementById('crypto-table');
+        tbody.innerHTML = '';
+
+        let total = 0;
+
+        portfolio.forEach(coin => {
+          const price = data[coin.id]?.eur || 0;
+          const value = price * coin.quantity;
+          total += value;
+
+          const row = `
+            <tr>
+              <td>${coin.name}</td>
+              <td>${coin.quantity}</td>
+              <td>${price.toFixed(2)} €</td>
+              <td>${value.toFixed(2)} €</td>
+            </tr>
+          `;
+          tbody.insertAdjacentHTML('beforeend', row);
+        });
+
+        const diff = total - budgetInitial;
+        const percent = ((diff / budgetInitial) * 100).toFixed(2);
+        const diffFormatted = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)} € (${percent}%)`;
+        const diffClass = diff >= 0 ? 'positive' : 'negative';
+
+        document.getElementById('total-value').textContent = total.toFixed(2) + ' €';
+        const diffEl = document.getElementById('difference');
+        diffEl.textContent = diffFormatted;
+        diffEl.className = diffClass;
+
+        const now = new Date();
+        const formattedTime = now.toLocaleString('fr-FR', { timeZone: 'Europe/Zurich' });
+        document.getElementById('last-updated').textContent = formattedTime;
+
+      } catch (error) {
+        console.error("Erreur API CoinGecko:", error);
+      }
+    }
+
+    fetchPrices();
+    setInterval(fetchPrices, 60000); // mise à jour toutes les 60 secondes
+  </script>
+</body>
+</html>
