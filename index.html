@@ -1,109 +1,113 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Portefeuille Crypto (EUR)</title>
+  <meta charset="UTF-8" />
+  <title>Portefeuille Crypto</title>
   <style>
-    body { font-family: sans-serif; }
-    table { border-collapse: collapse; margin-top: 1em; }
-    th, td { border: 1px solid #ccc; padding: 8px 12px; }
+    body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+    table { border-collapse: collapse; width: 100%; background: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+    th { background: #222; color: white; }
     tfoot td { font-weight: bold; }
-    .positive { color: green; }
-    .negative { color: red; }
+    .green { color: green; }
+    .red { color: red; }
   </style>
 </head>
 <body>
-  <h1>Portefeuille Crypto (EUR)</h1>
-  <p><strong>Budget initial :</strong> 1300 €</p>
-  <table>
+  <h1>Portefeuille Crypto - Budget : 1300 €</h1>
+  <table id="crypto-table">
     <thead>
       <tr>
-        <th>Crypto</th>
+        <th>Coin</th>
         <th>Quantité</th>
-        <th>Prix EUR</th>
-        <th>Valeur Totale (EUR)</th>
+        <th>Prix actuel (€)</th>
+        <th>Total (€)</th>
+        <th>Diff. (€)</th>
       </tr>
     </thead>
-    <tbody id="crypto-table"></tbody>
+    <tbody></tbody>
     <tfoot>
       <tr>
-        <td colspan="3">Valeur totale du portefeuille</td>
-        <td id="total-value">-</td>
-      </tr>
-      <tr>
-        <td colspan="3">Différence vs budget (1300 €)</td>
-        <td id="difference">-</td>
+        <td colspan="3">Total actuel</td>
+        <td id="total"></td>
+        <td id="diff"></td>
       </tr>
     </tfoot>
   </table>
 
-  <p>Dernière mise à jour : <span id="last-updated">Chargement...</span></p>
-
   <script>
-    const portfolio = [
-      { id: 'aave', name: 'AAVE', quantity: 1.5 },
-      { id: 'avalanche-2', name: 'AVAX', quantity: 10 },
-      { id: 'internet-computer', name: 'ICP', quantity: 18 },
-      { id: 'chainlink', name: 'LINK', quantity: 10 },
-      { id: 'matic-network', name: 'POL (MATIC)', quantity: 14 },
-      { id: 'near', name: 'NEAR', quantity: 24 },
-      { id: 'render-token', name: 'RNDR', quantity: 50 },
-      { id: 'bittensor', name: 'TAO', quantity: 1 },
-    ];
+    const initialData = {
+      AAVE: { qty: 1.5, buy: 85 },
+      AVAX: { qty: 10, buy: 25 },
+      ICP: { qty: 18, buy: 8 },
+      JUP: { qty: 50, buy: 0.8 },
+      LINK: { qty: 10, buy: 14 },
+      NEAR: { qty: 24, buy: 5.5 },
+      PYTH: { qty: 100, buy: 0.3 },
+      SEI: { qty: 100, buy: 0.55 },
+      TAO: { qty: 1, buy: 300 },
+      TIA: { qty: 10, buy: 6.8 }
+    };
 
-    const budgetInitial = 1300;
+    const formatter = val => Number(val).toFixed(2);
 
-    async function fetchPrices() {
-      const ids = portfolio.map(c => c.id).join(',');
-      const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur`;
-
-      try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
-
-        const tbody = document.getElementById('crypto-table');
-        tbody.innerHTML = '';
-
-        let total = 0;
-
-        portfolio.forEach(coin => {
-          const price = data[coin.id]?.eur || 0;
-          const value = price * coin.quantity;
-          total += value;
-
-          const row = `
-            <tr>
-              <td>${coin.name}</td>
-              <td>${coin.quantity}</td>
-              <td>${price.toFixed(2)} €</td>
-              <td>${value.toFixed(2)} €</td>
-            </tr>
-          `;
-          tbody.insertAdjacentHTML('beforeend', row);
-        });
-
-        const diff = total - budgetInitial;
-        const percent = ((diff / budgetInitial) * 100).toFixed(2);
-        const diffFormatted = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)} € (${percent}%)`;
-        const diffClass = diff >= 0 ? 'positive' : 'negative';
-
-        document.getElementById('total-value').textContent = total.toFixed(2) + ' €';
-        const diffEl = document.getElementById('difference');
-        diffEl.textContent = diffFormatted;
-        diffEl.className = diffClass;
-
-        const now = new Date();
-        const formattedTime = now.toLocaleString('fr-FR', { timeZone: 'Europe/Zurich' });
-        document.getElementById('last-updated').textContent = formattedTime;
-
-      } catch (error) {
-        console.error("Erreur API CoinGecko:", error);
-      }
+    async function fetchPrice(symbol) {
+      const url = `https://api.coingecko.com/api/v3/simple/price?ids=${symbol}&vs_currencies=eur`;
+      const res = await fetch(url);
+      const data = await res.json();
+      return data[symbol]?.eur || 0;
     }
 
-    fetchPrices();
-    setInterval(fetchPrices, 60000); // mise à jour toutes les 60 secondes
+    const symbolMap = {
+      AAVE: 'aave',
+      AVAX: 'avalanche-2',
+      ICP: 'internet-computer',
+      JUP: 'jupiter-exchange',
+      LINK: 'chainlink',
+      NEAR: 'near',
+      PYTH: 'pyth-network',
+      SEI: 'sei-network',
+      TAO: 'bittensor',
+      TIA: 'celestia'
+    };
+
+    async function updateTable() {
+      const tbody = document.querySelector('tbody');
+      tbody.innerHTML = '';
+
+      // Trier les coins par ordre alphabétique
+      const sortedCoins = Object.keys(initialData).sort();
+
+      let total = 0;
+      let initialTotal = 0;
+
+      for (let coin of sortedCoins) {
+        const data = initialData[coin];
+        const price = await fetchPrice(symbolMap[coin]);
+        const totalNow = data.qty * price;
+        const totalBuy = data.qty * data.buy;
+        const diff = totalNow - totalBuy;
+
+        total += totalNow;
+        initialTotal += totalBuy;
+
+        const row = `<tr>
+          <td>${coin}</td>
+          <td>${data.qty}</td>
+          <td>${formatter(price)}</td>
+          <td>${formatter(totalNow)}</td>
+          <td class="${diff >= 0 ? 'green' : 'red'}">${formatter(diff)}</td>
+        </tr>`;
+        tbody.innerHTML += row;
+      }
+
+      document.getElementById('total').textContent = formatter(total);
+      const totalDiff = total - initialTotal;
+      document.getElementById('diff').innerHTML = `<span class="${totalDiff >= 0 ? 'green' : 'red'}">${formatter(totalDiff)}</span>`;
+    }
+
+    updateTable();
+    setInterval(updateTable, 5 * 60 * 1000); // mise à jour toutes les 5 minutes
   </script>
 </body>
 </html>
