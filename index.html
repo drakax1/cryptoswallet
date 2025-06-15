@@ -73,4 +73,48 @@
         portfolio.forEach(c => {
           let price = data[c.id]?.eur;
           let displayPrice = '';
-          let value = 0
+          let value = 0;
+          let unavailable = false;
+
+          if (price === undefined || price === 0) {
+            displayPrice = `<span class="unavailable">Prix non disponible</span>`;
+            unavailable = true;
+          } else {
+            displayPrice = price.toFixed(2) + ' €';
+            value = price * c.quantity;
+            total += value;
+          }
+
+          const valueDisplay = unavailable ? `<span class="unavailable">-</span>` : value.toFixed(2) + ' €';
+
+          const row = `
+            <tr>
+              <td>${c.name}</td>
+              <td>${c.quantity}</td>
+              <td>${displayPrice}</td>
+              <td>${valueDisplay}</td>
+            </tr>`;
+          tbody.insertAdjacentHTML('beforeend', row);
+        });
+
+        const diff = total - budgetInitial;
+        const pct = ((diff / budgetInitial) * 100).toFixed(2);
+        document.getElementById('total-value').textContent = total.toFixed(2) + ' €';
+        const diffEl = document.getElementById('difference');
+        diffEl.textContent = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)} € (${pct}%)`;
+        diffEl.className = diff >= 0 ? 'positive' : 'negative';
+
+        document.getElementById('last-updated').textContent =
+          new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Zurich' });
+
+      } catch (err) {
+        console.error(err);
+        document.getElementById('last-updated').textContent = 'Erreur de chargement';
+      }
+    }
+
+    fetchPrices();
+    setInterval(fetchPrices, 60000);
+  </script>
+</body>
+</html>
